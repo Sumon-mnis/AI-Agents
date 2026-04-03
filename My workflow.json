@@ -1,0 +1,490 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "User Feedback Form",
+        "formDescription": "Share your feedback with us",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "Type your Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "placeholder": "Type Your Correct Email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Contact INFO",
+              "fieldType": "number",
+              "placeholder": "Type your contact information"
+            },
+            {
+              "fieldLabel": "Feedback",
+              "placeholder": "Type your feedback",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -1136,
+        -80
+      ],
+      "id": "9159f9b6-5904-41ac-b532-91e50ec8053f",
+      "name": "On form submission",
+      "webhookId": "75308f86-407c-4dfc-a5c4-e5842f6e7a1e"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this feedback and classify it as either \"complain\", \"compliment\", \"feature request\", or \"script writing request\". Respond with just the classification and a brief explanation.\n\nFeedback: {{ $json.Feedback }}",
+        "options": {
+          "systemMessage": "You are a feedback classification assistant. Your purpose is to analyze user feedback and categorize it accurately into one of four types: complain, compliment, feature request, or script writing request. Always provide a clear classification followed by a brief explanation."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -912,
+        48
+      ],
+      "id": "95ec4f10-33c3-4a68-8a3d-2148799ce115",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -848,
+        272
+      ],
+      "id": "7d11b2e8-52c1-4bbd-b24f-2dd020e23e6a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "oVgAFbeyVbAhZ8JL",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -560,
+        -80
+      ],
+      "id": "53995885-dbfb-4c34-b231-a9dd5f9d3a00",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "complain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "a5490661-6a59-47ab-8df5-addb01ffa42d"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "507152be-eb66-46af-ae72-982f7082e5e5",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "compliment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains",
+                      "name": "filter.operator.contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9cd2bc46-e951-4b56-8c45-f9659c30aeb0",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "feature",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains",
+                      "name": "filter.operator.contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c8d3ef47-1a23-4c56-9d78-e1234f567890",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "script",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains",
+                      "name": "filter.operator.contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f287dd53-4560-4ea4-bcc9-5ed2938dc132",
+      "name": "Route by Feedback Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -336,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json[\"Full Name\"] }}",
+            "Email": "={{ $json[\"Email Address\"] }}",
+            "Contact": "={{ $json[\"Contact INFO\"] }}",
+            "Feedback": "={{ $json.Feedback }}",
+            "Analysis": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f39b5313-947a-4775-a270-a949b63c962f",
+      "name": "Save Complaint",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json[\"Full Name\"] }}",
+            "Email": "={{ $json[\"Email Address\"] }}",
+            "Contact": "={{ $json[\"Contact INFO\"] }}",
+            "Feedback": "={{ $json.Feedback }}",
+            "Analysis": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1c96b74d-6dee-49e6-b9d6-6bc5d9354aae",
+      "name": "Save Compliment",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json[\"Full Name\"] }}",
+            "Email": "={{ $json[\"Email Address\"] }}",
+            "Contact": "={{ $json[\"Contact INFO\"] }}",
+            "Feedback": "={{ $json.Feedback }}",
+            "Analysis": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a2fe6a73-62ea-4c25-9dca-a3a54c6988d9",
+      "name": "Save Feature Request",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json[\"Full Name\"] }}",
+            "Email": "={{ $json[\"Email Address\"] }}",
+            "Contact": "={{ $json[\"Contact INFO\"] }}",
+            "Feedback": "={{ $json.Feedback }}",
+            "Analysis": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "72b8a352-9534-4ccd-9d84-1d6f4954c661",
+      "name": "Save Script Request",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        -176
+      ],
+      "id": "512ba347-f6f8-4ca6-beda-9a5a78d81b1f",
+      "name": "Add label to message",
+      "webhookId": "ada812ce-4fd1-49d9-bc13-ca1ae292948e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pGjzIhRyiiCsq3vm",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Route by Feedback Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Feedback Type": {
+      "main": [
+        [
+          {
+            "node": "Save Complaint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Compliment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Feature Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Script Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Complaint": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4e6c5637-15fb-401b-b683-0746e767e801",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7db47f15ddedc6fe6dadd132e4ab45884d0e3e996ae558fe298c838e03b1dace"
+  },
+  "id": "uQvCWzLxBeU2R0yg",
+  "tags": []
+}
